@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationSenderPort } from '../../application/ports/notification-sender.port';
 import { Notification } from '../../domain/entities/notification';
-import { User } from '../../domain/entities/user';
+import type { NotificationRecipient } from '../../application/dto/notification-recipient';
 import { SendEmailCommand, SendEmailCommandInput, SESClient } from '@aws-sdk/client-ses';
 import { ConfigService } from '@nestjs/config';
 import { EmailTemplates } from './templates/email-templates';
@@ -45,7 +45,7 @@ export class AWSNotificationAdapter implements NotificationSenderPort {
     }
 
     async sendPushNotification(
-        _user: User,
+        _recipient: NotificationRecipient,
         _notification: Notification,
     ): Promise<boolean> {
         this.logger.warn('📱 [SKIPPED] Push notifications not yet implemented for AWS');
@@ -53,7 +53,7 @@ export class AWSNotificationAdapter implements NotificationSenderPort {
     }
 
     async sendEmailNotification(
-        user: User,
+        recipient: NotificationRecipient,
         notification: Notification,
     ): Promise<boolean> {
         if (!this.emailEnabled || !this.sesClient) {
@@ -61,12 +61,12 @@ export class AWSNotificationAdapter implements NotificationSenderPort {
             return false;
         }
 
-        const emailContent = EmailTemplates.resolve(user, notification, this.frontendUrl);
+        const emailContent = EmailTemplates.resolve(recipient, notification, this.frontendUrl);
 
         const params: SendEmailCommandInput = {
             Source: this.senderAddress,
             Destination: {
-                ToAddresses: [user.getEmail().getValue()],
+                ToAddresses: [recipient.email],
             },
             Message: {
                 Body: {
@@ -82,7 +82,7 @@ export class AWSNotificationAdapter implements NotificationSenderPort {
 
         if (result.$metadata.httpStatusCode === 200) {
             this.logger.log(
-                `✅ Email sent to ${user.getEmail().getValue()} (ID: ${result.MessageId})`,
+                `✅ Email sent to ${recipient.email} (ID: ${result.MessageId})`,
             );
             return true;
         }

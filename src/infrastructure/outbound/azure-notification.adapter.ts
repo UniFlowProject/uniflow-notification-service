@@ -4,7 +4,7 @@ import { NotificationHubsClient } from '@azure/notification-hubs';
 import { EmailClient, EmailMessage } from '@azure/communication-email';
 import { NotificationSenderPort } from '../../application/ports/notification-sender.port';
 import { Notification } from '../../domain/entities/notification';
-import { User } from '../../domain/entities/user';
+import type { NotificationRecipient } from '../../application/dto/notification-recipient';
 import { EmailTemplates } from './templates/email-templates';
 
 @Injectable()
@@ -95,7 +95,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
   }
 
   async sendPushNotification(
-    user: User,
+    recipient: NotificationRecipient,
     notification: Notification,
   ): Promise<boolean> {
     if (!this.pushEnabled || !this.notificationHubClient) {
@@ -103,9 +103,9 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
       return false;
     }
 
-    if (!user.hasDeviceTokens()) {
+    if (!recipient.deviceTokens.length) {
       this.logger.warn(
-        `📱 No device tokens for user: ${user.getId().getValue()}`,
+        `📱 No device tokens for recipient: ${recipient.email}`,
       );
       return false;
     }
@@ -121,7 +121,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
         },
       };
 
-      for (const deviceToken of user.getDeviceTokens()) {
+      for (const deviceToken of recipient.deviceTokens) {
         try {
           await this.notificationHubClient.sendNotification(
             {
@@ -129,7 +129,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
               platform: 'gcm',
               contentType: 'application/json;charset=utf-8',
             },
-            { tagExpression: `userId:${user.getId().getValue()}` },
+            { tagExpression: `userId:${recipient.email}` },
           );
 
           this.logger.log(
@@ -151,7 +151,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
   }
 
   async sendEmailNotification(
-    user: User,
+    recipient: NotificationRecipient,
     notification: Notification,
   ): Promise<boolean> {
     if (!this.emailEnabled || !this.emailClient) {
@@ -160,7 +160,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
     }
 
     try {
-      const emailContent = EmailTemplates.resolve(user, notification, this.frontendUrl);
+      const emailContent = EmailTemplates.resolve(recipient, notification, this.frontendUrl);
 
       const message: EmailMessage = {
         senderAddress: this.senderAddress,
@@ -170,12 +170,12 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
           html: emailContent.html,
         },
         recipients: {
-          to: [{ address: user.getEmail().getValue() }],
+          to: [{ address: recipient.email }],
         },
       };
 
       this.logger.log(
-        `📤 Sending email to ${user.getEmail().getValue()}: "${emailContent.subject}"`,
+        `📤 Sending email to ${recipient.email}: "${emailContent.subject}"`,
       );
 
       const poller = await this.emailClient.beginSend(message);
@@ -183,7 +183,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
 
       if (result.status === 'Succeeded') {
         this.logger.log(
-          `✅ Email sent successfully to ${user.getEmail().getValue()} (ID: ${result.id})`,
+          `✅ Email sent successfully to ${recipient.email} (ID: ${result.id})`,
         );
         return true;
       } else {

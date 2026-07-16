@@ -1,13 +1,13 @@
 import { Notification } from '../../domain/entities/notification';
-import { User } from '../../domain/entities/user';
+import type { NotificationRecipient } from '../dto/notification-recipient';
 
 export interface NotificationSenderPort {
   sendPushNotification(
-    user: User,
+    recipient: NotificationRecipient,
     notification: Notification,
   ): Promise<boolean>;
   sendEmailNotification(
-    user: User,
+    recipient: NotificationRecipient,
     notification: Notification,
   ): Promise<boolean>;
 }

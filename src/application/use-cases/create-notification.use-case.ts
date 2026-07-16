@@ -7,8 +7,7 @@ import type { NotificationBroadcasterPort } from '../ports/notification-broadcas
 import { UserId } from '../../domain/value-objects/user-id';
 import { NotificationType } from '../../domain/value-objects/notification-type';
 import { Priority } from '../../domain/value-objects/priority';
-import { User } from '../../domain/entities/user';
-import { Email } from '../../domain/value-objects/email';
+import type { NotificationRecipient } from '../dto/notification-recipient';
 import type { CreateNotificationCommand } from '../commands/create-notification.command';
 
 @Injectable()
@@ -77,16 +76,15 @@ export class CreateNotificationUseCase {
 
   private async sendNotification(notification: Notification, name: string, email: string): Promise<void> {
     try {
-      const user = User.create({
-        id: notification.getUserId(),
-        name: name,
-        email: new Email(email),
+      const recipient: NotificationRecipient = {
+        name,
+        email,
         deviceTokens: [],
-      })
+      };
 
       const [pushSent, emailSent] = await Promise.allSettled([
-        this.notificationSender.sendPushNotification(user, notification),
-        this.notificationSender.sendEmailNotification(user, notification),
+        this.notificationSender.sendPushNotification(recipient, notification),
+        this.notificationSender.sendEmailNotification(recipient, notification),
       ]);
 
       if (pushSent.status === 'rejected') {

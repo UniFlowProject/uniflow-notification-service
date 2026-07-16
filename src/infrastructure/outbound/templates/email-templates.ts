@@ -394,7 +394,7 @@ UniFlow
   }
 
   static resolve(
-    user: { getName(): string },
+    user: { name: string },
     notification: {
       getActionUrl(): string | undefined;
       getTaskId(): string | undefined;
@@ -411,14 +411,14 @@ UniFlow
     const notificationType = notification.getType().getValue();
     if (notificationType === 'DEADLINE_REMINDER') {
       return EmailTemplates.deadlineReminder({
-        userName: user.getName(),
+        userName: user.name,
         taskTitle: notification.getTitle(),
         dueDate: 'Próximamente',
         taskUrl,
       });
     } else if (notificationType === 'TASK_CREATED') {
       return EmailTemplates.taskCreated({
-        userName: user.getName(),
+        userName: user.name,
         taskTitle: notification.getTitle(),
         subjectName: 'Tu materia',
         dueDate: 'Por definir',
@@ -426,7 +426,7 @@ UniFlow
       });
     } else {
       return EmailTemplates.generic({
-        userName: user.getName(),
+        userName: user.name,
         title: notification.getTitle(),
         message: notification.getMessage(),
         actionUrl: taskUrl,
