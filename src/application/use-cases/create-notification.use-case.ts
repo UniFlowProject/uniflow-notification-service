@@ -4,7 +4,6 @@ import { NotificationDomainService } from '../../domain/services/notification-do
 import type { INotificationRepository } from '../../domain/repositories/notification-repository.interface';
 import type { NotificationSenderPort } from '../ports/notification-sender.port';
 import type { NotificationBroadcasterPort } from '../ports/notification-broadcaster.port';
-import type { UserServicePort } from '../ports/user-service.port';
 import { UserId } from '../../domain/value-objects/user-id';
 import { NotificationType } from '../../domain/value-objects/notification-type';
 import { Priority } from '../../domain/value-objects/priority';
@@ -35,8 +34,6 @@ export class CreateNotificationUseCase {
     private readonly notificationSender: NotificationSenderPort,
     @Inject('NotificationBroadcasterPort')
     private readonly notificationBroadcaster: NotificationBroadcasterPort,
-    @Inject('UserServicePort')
-    private readonly userService: UserServicePort,
   ) { }
 
   async execute(command: CreateNotificationCommand): Promise<Notification> {
@@ -93,7 +90,6 @@ export class CreateNotificationUseCase {
 
   private async sendNotification(notification: Notification, name: string, email: string): Promise<void> {
     try {
-      // const user = await this.userService.getUserById(notification.getUserId());
       const user = User.create({
         id: notification.getUserId(),
         name: name,

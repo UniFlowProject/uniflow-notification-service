@@ -8,7 +8,6 @@ import {
 } from './infrastructure/persistence/schemas/notification.schema';
 import { MongoNotificationRepository } from './infrastructure/persistence/mongodb-notification.repository';
 import { AWSNotificationAdapter } from './infrastructure/external-services/aws-notification.adapter';
-import { UserServiceAdapter } from './infrastructure/external-services/user-service.adapter';
 import { NotificationController } from './infrastructure/web/notification.controller';
 
 import { NotificationDomainService } from './domain/services/notification-domain.service';
@@ -37,15 +36,11 @@ import { NotificationsGateway } from './infrastructure/web/notification.gateway'
       provide: 'NotificationSenderPort',
       useClass: AWSNotificationAdapter,
     },
+    NotificationsGateway,
     {
       provide: 'NotificationBroadcasterPort',
-      useClass: NotificationsGateway,
+      useExisting: NotificationsGateway,
     },
-    {
-      provide: 'UserServicePort',
-      useClass: UserServiceAdapter,
-    },
-    NotificationsGateway,
     CreateNotificationUseCase,
     GetUserNotificationsUseCase,
     MarkNotificationAsReadUseCase,
