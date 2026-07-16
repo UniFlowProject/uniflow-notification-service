@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1087.0",
     "@azure/communication-email": "^1.0.0",
     "@azure/notification-hubs": "^2.0.0",
     "@azure/storage-queue": "^12.27.0",
