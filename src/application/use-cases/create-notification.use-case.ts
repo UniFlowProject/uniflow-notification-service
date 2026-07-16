@@ -7,8 +7,8 @@ import type { NotificationBroadcasterPort } from '../ports/notification-broadcas
 import { UserId } from '../../domain/value-objects/user-id';
 import { NotificationType } from '../../domain/value-objects/notification-type';
 import { Priority } from '../../domain/value-objects/priority';
-import { User } from 'src/domain/entities/user';
-import { Email } from 'src/domain/value-objects/email';
+import { User } from '../../domain/entities/user';
+import { Email } from '../../domain/value-objects/email';
 import type { CreateNotificationCommand } from '../commands/create-notification.command';
 
 @Injectable()

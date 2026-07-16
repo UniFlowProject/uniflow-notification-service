@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationSenderPort } from 'src/application/ports/notification-sender.port';
-import { Notification } from 'src/domain/entities/notification';
-import { User } from 'src/domain/entities/user';
+import { NotificationSenderPort } from '../../application/ports/notification-sender.port';
+import { Notification } from '../../domain/entities/notification';
+import { User } from '../../domain/entities/user';
 import { SendEmailCommand, SendEmailCommandInput, SESClient } from '@aws-sdk/client-ses';
 import { ConfigService } from '@nestjs/config';
 import { EmailTemplates } from './templates/email-templates';
