@@ -4,13 +4,7 @@ import type {
   NotificationQueryResult,
 } from '../../domain/repositories/notification-repository.interface';
 import { UserId } from '../../domain/value-objects/user-id';
-
-export interface GetUserNotificationsQuery {
-  userId: string;
-  limit?: number;
-  offset?: number;
-  isRead?: boolean;
-}
+import type { GetUserNotificationsQuery } from '../queries/get-user-notifications.query';
 
 @Injectable()
 export class GetUserNotificationsUseCase {

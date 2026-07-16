@@ -2,17 +2,7 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import type { INotificationRepository } from '../../domain/repositories/notification-repository.interface';
 import { NotificationDomainService } from '../../domain/services/notification-domain.service';
 import { NotificationId } from '../../domain/value-objects/notification-id';
-
-export interface MarkNotificationAsReadCommand {
-  notificationId: string;
-}
-
-export interface MarkNotificationAsReadResult {
-  id: string;
-  isRead: boolean;
-  markedAt: Date;
-  success: boolean;
-}
+import type { MarkNotificationAsReadCommand, MarkNotificationAsReadResult } from '../commands/mark-as-read.command';
 
 @Injectable()
 export class MarkNotificationAsReadUseCase {

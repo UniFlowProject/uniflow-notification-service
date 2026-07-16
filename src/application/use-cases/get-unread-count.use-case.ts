@@ -1,16 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import type { INotificationRepository } from '../../domain/repositories/notification-repository.interface';
 import { UserId } from '../../domain/value-objects/user-id';
-
-export interface GetUnreadCountQuery {
-  userId: string;
-}
-
-export interface GetUnreadCountResult {
-  userId: string;
-  unreadCount: number;
-  lastChecked: Date;
-}
+import type { GetUnreadCountQuery, GetUnreadCountResult } from '../queries/get-unread-count.query';
 
 @Injectable()
 export class GetUnreadCountUseCase {

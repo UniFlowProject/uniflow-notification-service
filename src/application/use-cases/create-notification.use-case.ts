@@ -9,20 +9,7 @@ import { NotificationType } from '../../domain/value-objects/notification-type';
 import { Priority } from '../../domain/value-objects/priority';
 import { User } from 'src/domain/entities/user';
 import { Email } from 'src/domain/value-objects/email';
-
-export interface CreateNotificationCommand {
-  userId: string;
-  name: string;
-  email: string;
-  title: string;
-  message: string;
-  type: string;
-  priority: string;
-  taskId?: string;
-  subjectId?: string;
-  actionUrl?: string;
-  scheduledFor?: string;
-}
+import type { CreateNotificationCommand } from '../commands/create-notification.command';
 
 @Injectable()
 export class CreateNotificationUseCase {

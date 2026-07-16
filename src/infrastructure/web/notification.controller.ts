@@ -21,26 +21,16 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import {
-  CreateNotificationUseCase,
-  CreateNotificationCommand,
-} from '../../application/use-cases/create-notification.use-case';
-import {
-  GetUserNotificationsUseCase,
-  GetUserNotificationsQuery,
-} from '../../application/use-cases/get-user-notifications.use-case';
-import {
-  MarkNotificationAsReadUseCase,
-  MarkNotificationAsReadCommand,
-} from '../../application/use-cases/mark-notification-as-read.use-case';
-import {
-  GetUnreadCountUseCase,
-  GetUnreadCountQuery,
-} from '../../application/use-cases/get-unread-count.use-case';
-import {
-  DeleteNotificationUseCase,
-  DeleteNotificationCommand,
-} from '../../application/use-cases/delete-notification.use-case';
+import { CreateNotificationUseCase } from '../../application/use-cases/create-notification.use-case';
+import type { CreateNotificationCommand } from '../../application/commands/create-notification.command';
+import { GetUserNotificationsUseCase } from '../../application/use-cases/get-user-notifications.use-case';
+import type { GetUserNotificationsQuery } from '../../application/queries/get-user-notifications.query';
+import { MarkNotificationAsReadUseCase } from '../../application/use-cases/mark-notification-as-read.use-case';
+import type { MarkNotificationAsReadCommand } from '../../application/commands/mark-as-read.command';
+import { GetUnreadCountUseCase } from '../../application/use-cases/get-unread-count.use-case';
+import type { GetUnreadCountQuery } from '../../application/queries/get-unread-count.query';
+import { DeleteNotificationUseCase } from '../../application/use-cases/delete-notification.use-case';
+import type { DeleteNotificationCommand } from '../../application/commands/delete-notification.command';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationResponseDto } from './dto/notification-response.dto';
 import { NotificationListResponseDto } from './dto/notification-list-response.dto';

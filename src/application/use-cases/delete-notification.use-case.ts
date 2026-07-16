@@ -1,10 +1,7 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import type { INotificationRepository } from '../../domain/repositories/notification-repository.interface';
 import { NotificationId } from '../../domain/value-objects/notification-id';
-
-export interface DeleteNotificationCommand {
-  notificationId: string;
-}
+import type { DeleteNotificationCommand } from '../commands/delete-notification.command';
 
 @Injectable()
 export class DeleteNotificationUseCase {
