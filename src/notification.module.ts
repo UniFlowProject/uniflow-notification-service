@@ -7,7 +7,7 @@ import {
   NotificationMongoSchema,
 } from './infrastructure/persistence/schemas/notification.schema';
 import { MongoNotificationRepository } from './infrastructure/persistence/mongodb-notification.repository';
-import { AWSNotificationAdapter } from './infrastructure/external-services/aws-notification.adapter';
+import { AWSNotificationAdapter } from './infrastructure/outbound/aws-notification.adapter';
 import { NotificationController } from './infrastructure/web/notification.controller';
 
 import { NotificationDomainService } from './domain/services/notification-domain.service';
