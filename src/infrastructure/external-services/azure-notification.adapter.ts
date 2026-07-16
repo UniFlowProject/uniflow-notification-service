@@ -6,7 +6,6 @@ import { NotificationSenderPort } from '../../application/ports/notification-sen
 import { Notification } from '../../domain/entities/notification';
 import { User } from '../../domain/entities/user';
 import { EmailTemplates } from './templates/email-templates';
-import { NotificationTypeEnum } from '../../domain/value-objects/notification-type';
 
 @Injectable()
 export class AzureNotificationAdapter implements NotificationSenderPort {
@@ -161,7 +160,7 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
     }
 
     try {
-      const emailContent = this.getEmailTemplate(user, notification);
+      const emailContent = EmailTemplates.resolve(user, notification, this.frontendUrl);
 
       const message: EmailMessage = {
         senderAddress: this.senderAddress,
@@ -200,35 +199,4 @@ export class AzureNotificationAdapter implements NotificationSenderPort {
     }
   }
 
-  private getEmailTemplate(user: User, notification: Notification) {
-    const taskUrl =
-      notification.getActionUrl() ||
-      `${this.frontendUrl}/tasks/${notification.getTaskId()}`;
-
-    const notificationType = notification.getType().getValue();
-    if (notificationType === NotificationTypeEnum.DEADLINE_REMINDER) {
-      return EmailTemplates.deadlineReminder({
-        userName: user.getName(),
-        taskTitle: notification.getTitle(),
-        dueDate: 'Próximamente',
-        taskUrl,
-      });
-    } else if (notificationType === NotificationTypeEnum.TASK_CREATED) {
-      return EmailTemplates.taskCreated({
-        userName: user.getName(),
-        taskTitle: notification.getTitle(),
-        subjectName: 'Tu materia',
-        dueDate: 'Por definir',
-        taskUrl,
-      });
-    } else {
-      return EmailTemplates.generic({
-        userName: user.getName(),
-        title: notification.getTitle(),
-        message: notification.getMessage(),
-        actionUrl: taskUrl,
-        actionText: 'Ver Detalles',
-      });
-    }
-  }
 }

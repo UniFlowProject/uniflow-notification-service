@@ -392,4 +392,46 @@ UniFlow
 
     return { subject, html, text };
   }
+
+  static resolve(
+    user: { getName(): string },
+    notification: {
+      getActionUrl(): string | undefined;
+      getTaskId(): string | undefined;
+      getType(): { getValue(): string };
+      getTitle(): string;
+      getMessage(): string;
+    },
+    frontendUrl: string,
+  ) {
+    const taskUrl =
+      notification.getActionUrl() ||
+      `${frontendUrl}/tasks/${notification.getTaskId()}`;
+
+    const notificationType = notification.getType().getValue();
+    if (notificationType === 'DEADLINE_REMINDER') {
+      return EmailTemplates.deadlineReminder({
+        userName: user.getName(),
+        taskTitle: notification.getTitle(),
+        dueDate: 'Próximamente',
+        taskUrl,
+      });
+    } else if (notificationType === 'TASK_CREATED') {
+      return EmailTemplates.taskCreated({
+        userName: user.getName(),
+        taskTitle: notification.getTitle(),
+        subjectName: 'Tu materia',
+        dueDate: 'Por definir',
+        taskUrl,
+      });
+    } else {
+      return EmailTemplates.generic({
+        userName: user.getName(),
+        title: notification.getTitle(),
+        message: notification.getMessage(),
+        actionUrl: taskUrl,
+        actionText: 'Ver Detalles',
+      });
+    }
+  }
 }

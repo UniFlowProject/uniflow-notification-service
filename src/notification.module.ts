@@ -7,7 +7,7 @@ import {
   NotificationMongoSchema,
 } from './infrastructure/persistence/schemas/notification.schema';
 import { MongoNotificationRepository } from './infrastructure/persistence/mongodb-notification.repository';
-import { AzureNotificationAdapter } from './infrastructure/external-services/azure-notification.adapter';
+import { AWSNotificationAdapter } from './infrastructure/external-services/aws-notification.adapter';
 import { UserServiceAdapter } from './infrastructure/external-services/user-service.adapter';
 import { NotificationController } from './infrastructure/web/notification.controller';
 
@@ -35,7 +35,7 @@ import { NotificationsGateway } from './infrastructure/web/notification.gateway'
     },
     {
       provide: 'NotificationSenderPort',
-      useClass: AzureNotificationAdapter,
+      useClass: AWSNotificationAdapter,
     },
     {
       provide: 'NotificationBroadcasterPort',
