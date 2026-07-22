@@ -7,60 +7,132 @@ on:
   workflow_dispatch:
 
 env:
-  APP_DIR: /home/${{ secrets.EC2_USER }}/uniflow-notification-service
+  APP_DIR: /home/ec2-user/uniflow-notification-service
 
 jobs:
-  test:
-    name: Test
+  test-and-build:
+    name: Test & Build
     runs-on: ubuntu-latest
     environment: Production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - name: Run linter
-        run: pnpm run lint
+      - run: pnpm run lint
         continue-on-error: true
 
-      - name: Run tests
-        run: pnpm run test --passWithNoTests
+      - run: pnpm run test
+
+      - run: pnpm run build
+
+      - name: Package production deployment
+        run: |
+          mkdir -p deploy
+          cp -r dist/ package.json pnpm-lock.yaml deploy/
+          cd deploy && pnpm install --frozen-lockfile --prod
+          rm -f pnpm-lock.yaml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: deploy/
+          retention-days: 1
 
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: test
+    needs: test-and-build
     environment: Production
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: .
+
+      - name: Upload application to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: 'dist/,node_modules/,package.json'
+          target: ${{ env.APP_DIR }}
+          strip_components: 0
+
+      - name: Write environment variables on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: MONGODB_URI,MONGODB_HOST,MONGODB_PORT,MONGODB_DATABASE,MONGODB_USERNAME,MONGODB_PASSWORD,MONGODB_AUTH_SOURCE,AWS_REGION,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SES_SENDER_ADDRESS,NODE_ENV,PORT,FRONTEND_URL,EMAIL_ENABLED,PUSH_ENABLED,ALLOWED_CERTIFICATE_THUMBPRINTS
+          script: |
+            mkdir -p ${{ env.APP_DIR }}
+            tee ${{ env.APP_DIR }}/.env > /dev/null <<EOF
+            MONGODB_URI=$MONGODB_URI
+            MONGODB_HOST=$MONGODB_HOST
+            MONGODB_PORT=$MONGODB_PORT
+            MONGODB_DATABASE=$MONGODB_DATABASE
+            MONGODB_USERNAME=$MONGODB_USERNAME
+            MONGODB_PASSWORD=$MONGODB_PASSWORD
+            MONGODB_AUTH_SOURCE=$MONGODB_AUTH_SOURCE
+            AWS_REGION=$AWS_REGION
+            AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+            AWS_SES_SENDER_ADDRESS=$AWS_SES_SENDER_ADDRESS
+            NODE_ENV=$NODE_ENV
+            PORT=$PORT
+            FRONTEND_URL=$FRONTEND_URL
+            EMAIL_ENABLED=$EMAIL_ENABLED
+            PUSH_ENABLED=$PUSH_ENABLED
+            ALLOWED_CERTIFICATE_THUMBPRINTS=$ALLOWED_CERTIFICATE_THUMBPRINTS
+            EOF
+            chmod 600 ${{ env.APP_DIR }}/.env
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_HOST: ${{ secrets.MONGODB_HOST }}
+          MONGODB_PORT: ${{ secrets.MONGODB_PORT }}
+          MONGODB_DATABASE: ${{ secrets.MONGODB_DATABASE }}
+          MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
+          MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+          MONGODB_AUTH_SOURCE: ${{ secrets.MONGODB_AUTH_SOURCE }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SES_SENDER_ADDRESS: ${{ secrets.AWS_SES_SENDER_ADDRESS }}
+          NODE_ENV: ${{ vars.NODE_ENV }}
+          PORT: ${{ vars.PORT }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          EMAIL_ENABLED: ${{ vars.EMAIL_ENABLED }}
+          PUSH_ENABLED: ${{ vars.PUSH_ENABLED }}
+          ALLOWED_CERTIFICATE_THUMBPRINTS: ${{ secrets.ALLOWED_CERTIFICATE_THUMBPRINTS }}
+
+      - name: Restart and verify service
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/uniflow-notification-service
-
-            git fetch origin aws-main
-            git reset --hard origin/aws-main
-
-            pnpm install --frozen-lockfile --prod=false
-            pnpm run build
+            cd ${{ env.APP_DIR }}
 
             pm2 restart uniflow-notification-service --update-env \
               || pm2 start dist/main.js --name uniflow-notification-service
+
+            sleep 5
+
+            pm2 status uniflow-notification-service --no-color
+            echo "--- Application Logs ---"
+            pm2 logs uniflow-notification-service --lines 30 --nostream
