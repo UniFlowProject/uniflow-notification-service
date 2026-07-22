@@ -23,5 +23,4 @@ export interface INotificationRepository {
   ): Promise<NotificationQueryResult>;
   getUnreadCount(userId: UserId): Promise<number>;
   delete(id: NotificationId): Promise<void>;
-  findScheduledNotifications(before: Date): Promise<Notification[]>;
 }

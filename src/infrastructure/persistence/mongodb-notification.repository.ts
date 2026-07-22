@@ -20,7 +20,7 @@ export class MongoNotificationRepository implements INotificationRepository {
   constructor(
     @InjectModel(NotificationSchema.name)
     private readonly notificationModel: Model<NotificationDocument>,
-  ) {}
+  ) { }
 
   async save(notification: Notification): Promise<Notification> {
     const props = notification.toProps();
@@ -104,16 +104,5 @@ export class MongoNotificationRepository implements INotificationRepository {
     if (result.deletedCount === 0) {
       throw new Error('Notification not found');
     }
-  }
-
-  async findScheduledNotifications(before: Date): Promise<Notification[]> {
-    const documents = await this.notificationModel
-      .find({
-        scheduledFor: { $lte: before },
-        isRead: false,
-      })
-      .exec();
-
-    return documents.map((doc) => NotificationMapper.toDomain(doc));
   }
 }
