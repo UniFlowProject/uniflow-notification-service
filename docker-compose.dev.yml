@@ -1,0 +1,43 @@
+# DEV ONLY: throwaway credentials, ports bound to loopback. Override through the environment or a local .env.
+services:
+  mongo:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    ports:
+      - '127.0.0.1:27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER:-uniflow}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-uniflow-dev}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1}).ok' | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      PORT: 3003
+      MONGODB_URI: mongodb://${MONGODB_USER:-uniflow}:${MONGODB_PASSWORD:-uniflow-dev}@mongo:27017/uniflow_notifications?authSource=admin
+      FRONTEND_URL: http://localhost:3000
+      # Outbound email (SES) and push are out of scope locally.
+      EMAIL_ENABLED: "false"
+      PUSH_ENABLED: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -T 5 --spider http://localhost:3003/docs || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  mongo-data:
+    driver: local
